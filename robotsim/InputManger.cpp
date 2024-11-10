@@ -26,6 +26,7 @@ void inputmanager::moverobot(Robot& rob) {
 
 bool inputmanager::press(int in)
 {
+    
     //if (in >= 97 && in <= 122)
     //    in = in - 32;
     if (GetKeyState(in) & 0x8000)
