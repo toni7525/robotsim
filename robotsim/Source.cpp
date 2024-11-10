@@ -19,6 +19,13 @@ float time1, time2;
 vec2 mousep;
 POINT mousepos;
 
+float g_Scale = 1.0f;
+
+void ScrollCallback(GLFWwindow* window, double x, double y)
+{
+    g_Scale =(float)y;
+}
+
 int main(void)
 {
     GLFWwindow* window;
@@ -88,10 +95,10 @@ int main(void)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
     float postop[] = {
-      -0.1125f, 0.2f,0,1,//0
-      -0.1125f, -0.2f,0,0,//1
-       0.1125f, 0.2f,1,1,//2
-       0.1125f, -0.2f,1,0,//3
+      -0.2f, 0.2f,0,1,//0
+      -0.2f, -0.2f,0,0,//1
+       0.2f, 0.2f,1,1,//2
+       0.2f, -0.2f,1,0,//3
     };
 
     
@@ -110,31 +117,54 @@ int main(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO1);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
-    Textur robot("rob.png");
+    Textur robottex("rob.png");
     map map("map.map");
     Renderer renderer(map);
     inputmanager inpmanager;
+    Robot robot({ 0,0,0 });
     float offsetx=0, offsety=0;
-    float mx=0;
+    double angle;
+    float zoom=1;
+    vec2 move = { 0,0 };
+    vec2 camerapos = { 0,0 };
     while (!glfwWindowShouldClose(window))
     {
-        
-        mx += 1.0f;
+        move = { 0,0 };
         deltatime = time2 - time1;
         time1 = glfwGetTime();
         renderer.ClearScreen();
         ImGui_ImplGlfwGL3_NewFrame();
         GetCursorPos(&mousepos);
-        robot.Bind(0);
+        robottex.Bind(0);
         TextureShader.Bind();
-        if (inpmanager.press('W'))offsety += 0.01f;
-        if (inpmanager.press('S'))offsety -= 0.01f;
-        if (inpmanager.press('A'))offsetx -= 0.01f;
-        if (inpmanager.press('D'))offsetx += 0.01f;
-        TextureShader.SetUniform1f("offsetx", offsetx);
-
-       TextureShader.SetUniform1f("offsety", offsety);
-
+        if (inpmanager.press('W'))move.y += 0.01f;
+        if (inpmanager.press('S'))move.y -= 0.01f;
+        if (inpmanager.press('A'))move.x -= 0.01f;
+        if (inpmanager.press('D'))move.x += 0.01f;
+        if (inpmanager.press(VK_UP))camerapos.y += 0.01f;
+        if (inpmanager.press(VK_DOWN))camerapos.y -= 0.01f;
+        if (inpmanager.press(VK_RIGHT))camerapos.x += 0.01f;
+        if (inpmanager.press(VK_LEFT))camerapos.x -= 0.01f;
+        glfwSetScrollCallback(window, ScrollCallback);
+        if (g_Scale >0) {
+            g_Scale = 0;
+            if (zoom <= 19.0f)
+                zoom += 1.0f;
+            else
+                zoom = 20.0f;
+        }
+        if (g_Scale < 0) {
+            g_Scale = 0;
+            if (zoom >= 2.0f)
+                zoom -= 1.0f;
+            else
+                zoom = 1.0f;
+        }
+        if (inpmanager.press('Q'));
+        robot.ChangePos({move.x,move.y,0});
+        TextureShader.SetUniform1f("offsetx", offsetx +robot.GetPos().x - 0.5 - camerapos.x);
+        TextureShader.SetUniform1f("offsety", offsety +robot.GetPos().y - 0.5 - camerapos.y);
+        TextureShader.SetUniform1f("zoom", zoom);
         TextureShader.SetUniform1i("u_Texture", GL_TEXTURE0);
         glBindVertexArray(VAO1);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

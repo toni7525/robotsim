@@ -8,8 +8,8 @@ class inputmanager
 {
 public:
     vec2 MoveKeys();
-    void moverobot(robot& rob);
-    bool press(char in);
+    void moverobot(Robot& rob);
+    bool press(int in);
     void inputs();
     void MaxDrift(vec2 drif);
 private:

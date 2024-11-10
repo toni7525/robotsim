@@ -4,7 +4,7 @@ void inputmanager::inputs()
 {
 
 }
-void inputmanager::moverobot(robot& rob) {
+void inputmanager::moverobot(Robot& rob) {
     x = 0;
     y = 0;
     if (press('A')) {
@@ -24,11 +24,11 @@ void inputmanager::moverobot(robot& rob) {
     rob.SetSpeed({ Clamp(x + drift.x,-1,1),Clamp(y + drift.y,-1,1) });
 }
 
-bool inputmanager::press(char in)
+bool inputmanager::press(int in)
 {
-    if (in >= 'a' && in <= 'z')
-        in = (char)(in - 32);
+    //if (in >= 97 && in <= 122)
+    //    in = in - 32;
     if (GetKeyState(in) & 0x8000)
-    return true;
+        return true;
     return false;
 }

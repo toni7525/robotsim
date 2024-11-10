@@ -1,10 +1,10 @@
 #pragma once
 #include "mymath.h"
 
-class robot
+class Robot
 {
 public:
-    robot(vec3 start);
+    Robot(vec3 start);
     void ResetPos(vec3 res);
     vec3 GetPos();
     vec2 GetSpeedvec();
@@ -14,7 +14,7 @@ public:
     void Acelerate(vec2 acc);
     void SetSpeed(vec2 setsp);
     void AddSpeed(vec2 add);
-    void GoTo(vec3 to);
+    void ChangePos(vec3 to);
     void ChangeError(vec2 in);
     void UpdateSpeed();
     void UpdatePos();

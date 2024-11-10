@@ -5,12 +5,13 @@ layout(location = 1) in vec2 texcoords;
 out vec2 v_texcoords;
 uniform float offsetx;
 uniform float offsety;
-
+uniform float zoom;
 void main(){
-vec4 newpos=position;
-newpos.x += offsetx;
-newpos.y += offsety;
-gl_Position = newpos;
+vec2 outpos = vec2(position.x + offsetx,position.y + offsety);
+
+outpos.x = outpos.x/100*16* zoom;
+outpos.y = outpos.y/100*9 * zoom;
+gl_Position = vec4(outpos,0,1);
 v_texcoords = texcoords;
 };
 
