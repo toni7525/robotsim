@@ -127,6 +127,8 @@ int main(void)
     float zoom=1;
     vec2 move = { 0,0 };
     vec2 camerapos = { 0,0 };
+    std::string text;
+    
     while (!glfwWindowShouldClose(window))
     {
         move = { 0,0 };
@@ -146,7 +148,7 @@ int main(void)
         if (inpmanager.press(VK_RIGHT))camerapos.x += 0.01f;
         if (inpmanager.press(VK_LEFT))camerapos.x -= 0.01f;
         glfwSetScrollCallback(window, ScrollCallback);
-        if (g_Scale >0) {
+        if (g_Scale > 0) {
             g_Scale = 0;
             if (zoom <= 19.0f)
                 zoom += 1.0f;
@@ -161,17 +163,20 @@ int main(void)
                 zoom = 1.0f;
         }
         if (inpmanager.press('Q'));
-        robot.ChangePos({move.x,move.y,0});
-        TextureShader.SetUniform1f("offsetx", offsetx +robot.GetPos().x - 0.5 - camerapos.x);
-        TextureShader.SetUniform1f("offsety", offsety +robot.GetPos().y - 0.5 - camerapos.y);
+        robot.ChangePos({ move.x,move.y,0 });
+        TextureShader.SetUniform1f("offsetx", offsetx + robot.GetPos().x - 0.5 - camerapos.x);
+        TextureShader.SetUniform1f("offsety", offsety + robot.GetPos().y - 0.5 - camerapos.y);
         TextureShader.SetUniform1f("zoom", zoom);
         TextureShader.SetUniform1i("u_Texture", GL_TEXTURE0);
         glBindVertexArray(VAO1);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        std::stringstream textss;
+        textss << "camerapos:  " << camerapos.x<<"  " << camerapos.y << "\nrobotpos:" << robot.GetPos().x << "  " << robot.GetPos().y << " \n zoom:" << zoom;
 
+        text = textss.str();
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-
+        ImGui::Text(text.c_str());
+        textss.clear();
         ImGui::Render();
         ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
