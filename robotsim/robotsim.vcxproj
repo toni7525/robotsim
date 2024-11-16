@@ -156,6 +156,7 @@
     <ClInclude Include="shader.h" />
     <ClInclude Include="stbimage\stb_image.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="Wheel.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Basic.shader" />
