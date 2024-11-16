@@ -1,8 +1,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
 #include"AllMyInclude.h"
-
+#include "Wheel.h"
 #define fov 30.0f
 #define degres 0.0174f
 #define ScreenHeight 768
@@ -123,30 +122,43 @@ int main(void)
     inputmanager inpmanager;
     Robot robot({ 0,0,0 });
     float offsetx=0, offsety=0;
-    double angle;
     float zoom=1;
-    vec2 move = { 0,0 };
+    vec3 move = { 0,0 ,0};
     vec2 camerapos = { 0,0 };
     std::string text;
-    
+    double robspeed = 0;
+    vec3 deltarobpos = { 0,0,0 };
+    vec3 robpos = {0,0,0};
+
+    wheel FR(&robot, { 1,1 });
+    wheel FL(&robot, { 1,0 });
+    wheel BR(&robot, { 0,1 });
+    wheel BL(&robot, { 0,0 });
     while (!glfwWindowShouldClose(window))
     {
-        move = { 0,0 };
+        deltarobpos.x = robot.GetPos().x - robpos.x;
+        deltarobpos.y = robot.GetPos().y - robpos.y;
+        deltarobpos.z = robot.GetPos().z - robpos.z;
+        robpos = robot.GetPos();
+        robspeed = sqrt(deltarobpos.x* deltarobpos.x+ deltarobpos.y* deltarobpos.y);
+        move = { 0,0 ,0 };
         deltatime = time2 - time1;
         time1 = glfwGetTime();
-        renderer.ClearScreen();
-        ImGui_ImplGlfwGL3_NewFrame();
-        GetCursorPos(&mousepos);
-        robottex.Bind(0);
-        TextureShader.Bind();
+        
+        //move rob + input
+        
         if (inpmanager.press('W'))move.y += 0.01f;
         if (inpmanager.press('S'))move.y -= 0.01f;
         if (inpmanager.press('A'))move.x -= 0.01f;
         if (inpmanager.press('D'))move.x += 0.01f;
-        if (inpmanager.press(VK_UP))camerapos.y += 0.01f;
-        if (inpmanager.press(VK_DOWN))camerapos.y -= 0.01f;
-        if (inpmanager.press(VK_RIGHT))camerapos.x += 0.01f;
-        if (inpmanager.press(VK_LEFT))camerapos.x -= 0.01f;
+        if (inpmanager.press('E'))
+            move.z += 0.1;
+        if (inpmanager.press('Q'))
+            move.z -= 0.1;
+        if (inpmanager.press(VK_UP))camerapos.y += 0.01f*10/zoom;
+        if (inpmanager.press(VK_DOWN))camerapos.y -= 0.01f*10/zoom;
+        if (inpmanager.press(VK_RIGHT))camerapos.x += 0.01f * 10 / zoom;
+        if (inpmanager.press(VK_LEFT))camerapos.x -= 0.01f * 10 / zoom;
         glfwSetScrollCallback(window, ScrollCallback);
         if (g_Scale > 0) {
             g_Scale = 0;
@@ -162,16 +174,50 @@ int main(void)
             else
                 zoom = 1.0f;
         }
-        if (inpmanager.press('Q'));
-        robot.ChangePos({ move.x,move.y,0 });
+        
+        double PowerVector[] = {0, 0, 0, 0, 0};
+
+        PowerVector[4] = fabs(move.y) + fabs(move.x) + fabs(move.z);
+
+        PowerVector[0] = move.y - move.x + move.z;
+        PowerVector[1] = move.y + move.x - move.z;
+        PowerVector[2] = move.y + move.x + move.z;
+        PowerVector[3] = move.y - move.x - move.z;
+
+        if (PowerVector[4] > 1) {
+            PowerVector[4] /= 1;
+
+            PowerVector[0] *= PowerVector[4];
+            PowerVector[1] *= PowerVector[4];
+            PowerVector[2] *= PowerVector[4];
+            PowerVector[3] *= PowerVector[4];
+        }
+
+        FL.setPower(PowerVector[0]);
+        FR.setPower(PowerVector[1]);
+        BL.setPower(PowerVector[2]);
+        BR.setPower(PowerVector[3]);
+        
+        robot.UpdateWheels();
+        if (inpmanager.press(VK_TAB)) robot.ResetPos({ 0,0,0 });
+
+        //drawrobot
+        renderer.ClearScreen();
+        ImGui_ImplGlfwGL3_NewFrame();
+        GetCursorPos(&mousepos);
+        robottex.Bind(0);
+        TextureShader.Bind();
         TextureShader.SetUniform1f("offsetx", offsetx + robot.GetPos().x - 0.5 - camerapos.x);
         TextureShader.SetUniform1f("offsety", offsety + robot.GetPos().y - 0.5 - camerapos.y);
         TextureShader.SetUniform1f("zoom", zoom);
+        TextureShader.SetUniform2f("sincos", (float)sin(robot.GetPos().z), (float)cos(robot.GetPos().z));
         TextureShader.SetUniform1i("u_Texture", GL_TEXTURE0);
         glBindVertexArray(VAO1);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+        //draw console
         std::stringstream textss;
-        textss << "camerapos:  " << camerapos.x<<"  " << camerapos.y << "\nrobotpos:" << robot.GetPos().x << "  " << robot.GetPos().y << " \n zoom:" << zoom;
+        textss << "camerapos:  " << camerapos.x<<"  " << camerapos.y << "\nrobotpos:" << robot.GetPos().x << "  " << robot.GetPos().y << " \n zoom:" << zoom<<"\n speed:"<< robspeed;
 
         text = textss.str();
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
